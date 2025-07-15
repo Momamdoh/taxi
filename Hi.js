@@ -1,32 +1,59 @@
-// Import the Firebase Admin SDK
-const admin = require("firebase-admin");
+// Load environment variables
+require("dotenv").config();
 
-// Initialize Firebase Admin SDK
-const serviceAccount = require("./e-commerce-d02dc-firebase-adminsdk-jrxbh-cd2ef20d25.json");
+// Import necessary packages
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+// const corsHeaders = require("./middlewares/headers");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+// Import custom middlewares and utilities
+const logger = require("./middlewares/logger");
+const { notfound, errors } = require("./middlewares/errors");
+const { ConnectToDb } = require("./config/db");
+
+// Create an instance of the Express application
+const app = express();
+
+// Set the view engine to EJS
+app.set("view engine", "ejs");
+
+// Set the views directory
+app.set("views", path.join(__dirname, "views"));
+
+// Connect to MongoDB
+ConnectToDb();
+
+// Middleware
+app.use(cors());
+// app.use(corsHeaders);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(logger);
+
+// Static file serving
+app.use(express.static(path.join(__dirname, 'public/images')));
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
+// Routes
+app.use("/driver", require("./routes/drivers"));
+app.use("/userauth", require("./routes/userauth"));
+app.use("/driverauthent", require("./routes/driverauth"));
+app.use("/Img", require("./routes/upload"));
+app.use("/user", require("./routes/users"));
+app.use("/pass", require("./routes/password"));
+app.use("/api/trips", require("./routes/trips"));
+app.use("/love", require("./routes/likes"));
+
+// Base route
+app.use("/", (req, res) => {
+  res.json("Welcome");
 });
 
-// Define the target token and message
-const targetToken = "dVYH70_OSaO9rFiC7hMAd0:APA91bHBr4hdx5cg_3aHe0lO7gf4nnNcmlWNM0kCNQH2i8W2FOaq0hJ1ryVnStSVqWKmrjK3O6VoFdaxKNHzhbC4R4w4IuyC9fRr_RdU_or2SFyOkB_AbQA";
-const message = {
-  notification: {
-    title: "Ebook",
-    body: "bye",
-  },
-  data: {
-    route: "/notifications", 
-  },
-  token: targetToken,
-};
+// Error handling
+app.use(notfound);
+app.use(errors);
 
-admin
-  .messaging()
-  .send(message)
-  .then((response) => {
-    console.log("Message sent successfully:", response);
-  })
-  .catch((error) => {
-    console.error("Error sending message:", error);
-  });
+// ❌ لا تكتب app.listen()
+// ✅ استخدم export لتوافق Vercel
+module.exports = app;
