@@ -44,7 +44,6 @@ app.use("/Img", require("./routes/upload"));
 app.use("/user", require("./routes/users"));
 app.use("/pass", require("./routes/password"));
 app.use("/api/trips", require("./routes/trips"));
-app.use("/love", require("./routes/likes"));
 
 
 // Base route
